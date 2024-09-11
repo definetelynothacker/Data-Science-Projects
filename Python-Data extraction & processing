@@ -1,0 +1,35 @@
+import requests
+import pandas as pd
+import matplotlib.pyplot as plt
+
+response = requests.get("https://covid-api.com/api/reports/total?data=2020-04-16")
+
+def check_response():
+    if response.status_code != 200:
+        print("Error with retreiving data")
+    elif response.status_code == 200:
+        print(f"Success, server returned: {response.status_code}")
+
+def view_data_text():
+    data_parsed = response.json()
+    covid_data = pd.DataFrame(data_parsed)
+    print(covid_data)
+
+def view_graphs():
+    data_parsed = response.json()
+    covid_data = data_parsed['data']
+    covid_df = pd.DataFrame([covid_data])
+    covid_df['date'] = pd.to_datetime(covid_df['date'])
+    covid_df.set_index('date', inplace=True)
+
+    plt.title("COVID-19 Deaths vs Date")
+    plt.figure(figsize=(12, 6))
+    plt.plot(covid_df.index, covid_df['deaths'], marker='o', linestyle='-')
+    plt.xlabel("Date")
+    plt.ylabel("Deaths")
+    plt.show()
+
+check_response()
+view_data_text()
+view_graphs()
+
