@@ -2,8 +2,8 @@ import requests, csv, time, os, re
 from bs4 import BeautifulSoup
 
 baseUrl     = "https://www.nlcbplaywhelotto.com/nlcb-play-whe-results/?drawnumber="
-drawStart=3000
-drawEnd=3250#there are more but we will stop there
+drawStart=6500
+drawEnd=22500#there are more but we will stop there
 data = [
     ['Draw #', 'Mark #', 'Mark name', 'Time Of Day', 'isVerified']
 ]
@@ -53,27 +53,45 @@ def createOrReadFile():
 file, writer = createOrReadFile()
 
 def writeToFile(newRow):
+    print(newRow)
     writer.writerow(newRow)
+    file.flush()
 
 
 forLoopStartTime = time.time()
 for i in range(drawStart, drawEnd):
-    r = requests.get(baseUrl+str(i))
-    soup = BeautifulSoup(r.content, 'html.parser')
-    s = soup.find('div', class_='drawDetails')
-    link = s.find_all('a')
-    tOfD = s.find('div', class_="timeOfDay")
-    mN = s.find('div', class_="mark-name")
+    try:
+        r = requests.get(baseUrl+str(i))
+        soup = BeautifulSoup(r.content, 'html.parser')
+        s = soup.find('div', class_='drawDetails')
 
-    markNum = getMarkNum(str(link))
-    timeOfDay = getTimeOfDay(str(tOfD))
-    markName = getMarkName(str(mN))
+        if not s:
+            print(f"No draw details for draw: {drawStart}")
+            newRow = ['000', '000', '000', '000', '000']
+            writeToFile(newRow)
+            data.append(newRow)
+            continue
+
+        link = s.find_all('a')
+
+        tOfD = s.find('div', class_="timeOfDay")
+        mN = s.find('div', class_="mark-name")
+        if not link or not tOfD or not mN:
+            print(f"Missing data for Draw: {drawStart}")
+            markNum = 0
+        else:
+            markNum = getMarkNum(str(link))
+            
+        timeOfDay = getTimeOfDay(str(tOfD))
+        markName = getMarkName(str(mN))
 
 
-    newRow = [str(i), str(markNum), str(markName), str(timeOfDay)]
-    print(newRow)
-    writeToFile(newRow)
-    data.append(newRow)
+        newRow = [str(i), str(markNum), str(markName), str(timeOfDay)]
+        writeToFile(newRow)
+        data.append(newRow)
+        #time.sleep(0.25)
+    except Exception as e:
+        print(f"Error processing Draw: {drawStart}: {e}")
 forLoopEndTime = time.time()
 file.close()
 duration = forLoopEndTime - forLoopStartTime
