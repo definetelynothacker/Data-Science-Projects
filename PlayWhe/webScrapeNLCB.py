@@ -2,15 +2,14 @@ import requests, csv, time, os, re
 from bs4 import BeautifulSoup
 
 baseUrl     = "https://www.nlcbplaywhelotto.com/nlcb-play-whe-results/?drawnumber="
-drawStart=6500
-drawEnd=22500#there are more but we will stop there
+drawStart=9000
+drawEnd=10000#there are more but we will stop there
 data = [
-    ['Draw #', 'Mark #', 'Mark name', 'Time Of Day', 'isVerified']
+    ['Draw #', 'Mark #', 'Mark name', 'Time Of Day', 'isVerified', 'Date']
 ]
 
 
 def getMarkNum(string: str)->int:
-    #markNum:str=""
     match = re.search(r'\d+', string)
     if match:
         markNumInt = int(match.group())
@@ -35,6 +34,12 @@ def getIsVerified(string: str)->str:
     isVerified = string[22:]
     isVerified = isVerified.replace("</div>", "")
     return isVerified
+
+
+def getDate(string: str)->str:
+    regex = r'\b\d{2}-[A-Za-z]{3}-\d{2}\b'
+    date = re.findall(regex, string)
+    return date
 
 def createOrReadFile():
     scriptDir = os.path.dirname(os.path.abspath(__file__))
@@ -63,6 +68,7 @@ for i in range(drawStart, drawEnd):
     try:
         r = requests.get(baseUrl+str(i))
         soup = BeautifulSoup(r.content, 'html.parser')
+        v = soup.find(id='results')
         s = soup.find('div', class_='drawDetails')
 
         if not s:
@@ -71,11 +77,17 @@ for i in range(drawStart, drawEnd):
             writeToFile(newRow)
             data.append(newRow)
             continue
-
+        
         link = s.find_all('a')
+        includesDate = v.find_all('strong')
+        if includesDate:
+            date = includesDate[0]
+        else:
+            date = "000"
 
         tOfD = s.find('div', class_="timeOfDay")
         mN = s.find('div', class_="mark-name")
+
         if not link or not tOfD or not mN:
             print(f"Missing data for Draw: {drawStart}")
             markNum = 0
@@ -84,9 +96,8 @@ for i in range(drawStart, drawEnd):
             
         timeOfDay = getTimeOfDay(str(tOfD))
         markName = getMarkName(str(mN))
-
-
-        newRow = [str(i), str(markNum), str(markName), str(timeOfDay)]
+        newDate = getDate(str(date))
+        newRow = [str(i), str(markNum), markName, timeOfDay, newDate]
         writeToFile(newRow)
         data.append(newRow)
         #time.sleep(0.25)
