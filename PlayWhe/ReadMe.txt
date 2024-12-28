@@ -1,0 +1,1 @@
+Yeah I know it doesn't actually make sense to analyse data for betting/lottery games, but someone paid me to do it, i did let them know that it wasn't going to work multiple times, and by work i mean give insights on what numbers to play since it's random, but they insisted, so here is.
