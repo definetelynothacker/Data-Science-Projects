@@ -1,9 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
 
 dataDictionary = {i: 0 for i in range(0, 37)}
 numbers: int = []
-df = pd.read_csv('filename')
+df = pd.read_csv('nlcb_res.csv')
 markNum_data = df['Mark #'].tolist()
 
 #plotting format
@@ -19,6 +21,22 @@ def calcMean(data: list)->float:
 def numbersByFrequency(data: list):
     for num in data:
         dataDictionary[num]+=1
+
+
+def trendAnalysis(dataFrame):
+    dataFrame['Date'] = pd.to_datetime(dataFrame['Date'], format='%d-%b-%y', errors='coerce')
+    dataFrame = dataFrame.dropna(subset=['Date'])
+    dataFrame.set_index('Date', inplace=True)
+    monthlyCounts = dataFrame.resample('ME').size()
+    monthlyCounts.plot(title="Monthly Counts over Time")
+    plt.show()
+
+def distro(df):
+    df['Mark #'].hist(bins=30, color='blue', edgecolor='grey')
+    plt.title('Distribution of Draw #')
+    plt.xlabel('Mark #')
+    plt.ylabel('Frequency')
+    plt.show()
 
 def makeBarGraph():
     #dataSetSize: int = len(markNum_data)
@@ -37,4 +55,9 @@ print(f"Number Frequency: {dataDictionary}")
 print(dataDictionary)
 
 #Visuallize data
+summary = df.describe()
+print(summary)
 makeBarGraph()
+trendAnalysis(df)
+distro(df)
+
